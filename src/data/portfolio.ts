@@ -324,7 +324,7 @@ export const certifications: Certification[] = [
 
 export const socialLinks: SocialLink[] = [
   { name: 'GitHub', url: 'https://github.com/samuelndzeghaboungou', icon: 'github' },
-  { name: 'LinkedIn', url: 'https://linkedin.com/in/', icon: 'linkedin' },
+  { name: 'LinkedIn', url: 'https://www.linkedin.com/in/paul-marie-samuel-ndzegha-boungou', icon: 'linkedin' },
   { name: 'Email', url: 'mailto:s.ndzeghaboungou@esisa.ac.ma', icon: 'mail' },
 ];
 

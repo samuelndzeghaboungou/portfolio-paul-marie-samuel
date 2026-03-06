@@ -1,0 +1,17 @@
+{
+  "name": "portfolio-paul-marie-samuel",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^5.7.10",
+    "@astrojs/vercel": "^8.1.4",
+    "@vercel/analytics": "^1.5.0"
+  }
+}

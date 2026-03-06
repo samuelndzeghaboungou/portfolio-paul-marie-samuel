@@ -1,0 +1,79 @@
+---
+/**
+ * @component BackToTop
+ * Floating button that appears after 500px scroll, smooth-scrolls to top.
+ */
+---
+
+<button
+  class="back-to-top"
+  id="back-to-top"
+  aria-label="Retour en haut"
+  title="Retour en haut"
+>
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m18 15-6-6-6 6"/>
+  </svg>
+</button>
+
+<script>
+  const btn = document.getElementById('back-to-top') as HTMLButtonElement;
+
+  const toggleBtn = () => {
+    btn.classList.toggle('visible', window.scrollY > 500);
+  };
+
+  window.addEventListener('scroll', toggleBtn, { passive: true });
+  toggleBtn();
+
+  btn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+</script>
+
+<style>
+  .back-to-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 900;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(17, 24, 39, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    transition: all 0.3s ease;
+  }
+
+  .back-to-top.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+  }
+
+  .back-to-top:hover {
+    color: var(--color-primary-light);
+    border-color: var(--color-primary);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.2);
+  }
+
+  @media (max-width: 768px) {
+    .back-to-top {
+      width: 40px;
+      height: 40px;
+      bottom: 16px;
+      right: 16px;
+    }
+  }
+</style>

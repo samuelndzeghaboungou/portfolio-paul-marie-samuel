@@ -1,0 +1,657 @@
+---
+/**
+ * @component AiAssistant
+ * Floating chatbot powered by a local knowledge base built from the
+ * centralized data file. No external API. Keyword-matching with regex.
+ */
+import {
+  personalInfo, stats, technicalSkills, softSkills,
+  education, experience, publications, projects,
+  certifications, socialLinks, navItems
+} from '../data/portfolio';
+
+/* Build knowledge base as serializable JSON for the client script */
+const knowledgeBase = JSON.stringify({
+  personal: personalInfo,
+  stats,
+  technicalSkills,
+  softSkills,
+  education,
+  experience,
+  publications,
+  projects,
+  certifications,
+  socialLinks,
+  navItems,
+});
+
+/* Quick action chips – adaptive */
+const quickActions: { label: string; query: string }[] = [
+  { label: `Qui est ${personalInfo.firstName} ?`, query: 'about' },
+  { label: 'Compétences', query: 'skills' },
+  ...(education.length > 0 ? [{ label: 'Éducation', query: 'education' }] : []),
+  ...(experience.length > 0 ? [{ label: 'Expérience', query: 'experience' }] : []),
+  ...(publications.length > 0 ? [{ label: 'Publications', query: 'publications' }] : []),
+  { label: 'Projets', query: 'projects' },
+  ...(certifications.length > 0 ? [{ label: 'Certifications', query: 'certifications' }] : []),
+  { label: 'Contact', query: 'contact' },
+];
+---
+
+<!-- Toggle button -->
+<button class="ai-toggle" id="ai-toggle" aria-label="Ouvrir l'assistant IA" title="Assistant IA">
+  <span class="ai-toggle__ring"></span>
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
+  </svg>
+</button>
+
+<!-- Chat panel -->
+<div class="ai-panel" id="ai-panel" aria-hidden="true">
+  <div class="ai-panel__header">
+    <div class="ai-panel__avatar">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>
+      </svg>
+    </div>
+    <div>
+      <span class="ai-panel__name">Portfolio AI</span>
+      <span class="ai-panel__status"><span class="ai-panel__status-dot"></span> Online</span>
+    </div>
+    <button class="ai-panel__close" id="ai-close" aria-label="Fermer le chat">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+  </div>
+
+  <div class="ai-panel__messages" id="ai-messages">
+    <!-- Welcome message -->
+    <div class="ai-msg ai-msg--bot">
+      <div class="ai-msg__avatar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+      </div>
+      <div class="ai-msg__bubble">
+        Bonjour ! 👋 Je suis l'assistant IA de <strong>{personalInfo.firstName}</strong>. Posez-moi une question sur son parcours, ses compétences ou ses projets !
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <div class="ai-panel__chips" id="ai-chips">
+    {quickActions.map((action) => (
+      <button class="ai-chip" data-query={action.query}>{action.label}</button>
+    ))}
+  </div>
+
+  <!-- Input -->
+  <form class="ai-panel__input" id="ai-form">
+    <input type="text" id="ai-input" placeholder="Posez votre question..." autocomplete="off" />
+    <button type="submit" aria-label="Envoyer">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+    </button>
+  </form>
+</div>
+
+<!-- Client-side script with knowledge base -->
+<script define:vars={{ knowledgeBase, quickActionsData: quickActions }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    const kb = JSON.parse(knowledgeBase);
+    const toggle = document.getElementById('ai-toggle');
+    const panel = document.getElementById('ai-panel');
+    const closeBtn = document.getElementById('ai-close');
+    const messagesEl = document.getElementById('ai-messages');
+    const chipsEl = document.getElementById('ai-chips');
+    const form = document.getElementById('ai-form');
+    const input = document.getElementById('ai-input');
+
+    let chipsVisible = true;
+
+    /* -- Open / Close -- */
+    function openPanel() {
+      panel.setAttribute('aria-hidden', 'false');
+      toggle.classList.add('hidden');
+      input.focus();
+    }
+
+    function closePanel() {
+      panel.setAttribute('aria-hidden', 'true');
+      toggle.classList.remove('hidden');
+    }
+
+    toggle.addEventListener('click', openPanel);
+    closeBtn.addEventListener('click', closePanel);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closePanel();
+    });
+
+    /* -- Mini markdown renderer -- */
+    function renderMd(text) {
+      return text
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+        .replace(/\n/g, '<br>');
+    }
+
+    /* -- Add message to chat -- */
+    function addMessage(text, isBot = false) {
+      const wrap = document.createElement('div');
+      wrap.className = `ai-msg ai-msg--${isBot ? 'bot' : 'user'}`;
+
+      if (isBot) {
+        wrap.innerHTML = `
+          <div class="ai-msg__avatar">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+          </div>
+          <div class="ai-msg__bubble">${renderMd(text)}</div>
+        `;
+      } else {
+        wrap.innerHTML = `<div class="ai-msg__bubble">${renderMd(text)}</div>`;
+      }
+
+      messagesEl.appendChild(wrap);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      // Handle section links – close chat and scroll
+      wrap.querySelectorAll('a[href^="#"]').forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          closePanel();
+          const target = document.querySelector(link.getAttribute('href'));
+          if (target) target.scrollIntoView({ behavior: 'smooth' });
+        });
+      });
+    }
+
+    /* -- Typing indicator -- */
+    function showTyping() {
+      const el = document.createElement('div');
+      el.className = 'ai-msg ai-msg--bot ai-typing';
+      el.innerHTML = `
+        <div class="ai-msg__avatar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+        </div>
+        <div class="ai-msg__bubble"><span class="typing-dots"><span></span><span></span><span></span></span></div>
+      `;
+      messagesEl.appendChild(el);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      return el;
+    }
+
+    /* -- Knowledge-based response engine -- */
+    function getResponse(query) {
+      const q = query.toLowerCase().trim();
+      const p = kb.personal;
+      const name = p.firstName + ' ' + p.lastName;
+
+      // Greetings
+      if (/^(bonjour|salut|hello|hi|hey|coucou|yo|salam)/.test(q)) {
+        return `Bonjour ! 👋 Je suis l'assistant virtuel de **${name}**. Comment puis-je vous aider ? Vous pouvez me poser des questions sur son parcours, ses compétences, ses projets, etc.`;
+      }
+
+      // Thanks
+      if (/merci|thanks|thank you|super|parfait|genial|cool/.test(q)) {
+        return `Avec plaisir ! 😊 N'hésitez pas si vous avez d'autres questions sur **${p.firstName}**.`;
+      }
+
+      // About / Who
+      if (/qui est|about|à propos|parcours|présent|profil|tell me about/.test(q)) {
+        return `**${name}** est ${p.title} basé à ${p.location}.\n\n${p.bio[0]}\n\n👉 [En savoir plus](#about)`;
+      }
+
+      // Skills (general)
+      if (/compétence|skill|techno|stack|outil|tool|maitrise|langage|framework/.test(q)) {
+        const allSkills = kb.technicalSkills.map(c => `**${c.title}**: ${c.skills.join(', ')}`).join('\n');
+        return `Voici les compétences techniques de **${p.firstName}** :\n\n${allSkills}\n\n👉 [Voir toutes les compétences](#skills)`;
+      }
+
+      // Specific tech check
+      const techNames = kb.technicalSkills.flatMap(c => c.skills.map(s => s.toLowerCase()));
+      const foundTech = techNames.find(t => q.includes(t.toLowerCase()));
+      if (foundTech) {
+        const cat = kb.technicalSkills.find(c => c.skills.some(s => s.toLowerCase() === foundTech));
+        return `Oui ! **${p.firstName}** maîtrise **${foundTech}**, qui fait partie de la catégorie *${cat?.title}*.\n\n👉 [Voir les compétences](#skills)`;
+      }
+
+      // Education
+      if (/éducation|education|étude|diplôme|formation|université|école|bac|licence|master|ingénieur|esisa/.test(q)) {
+        const eduText = kb.education.map(e => `• **${e.degree}** en *${e.field}* — ${e.institution} (${e.period})`).join('\n');
+        return `Parcours académique de **${p.firstName}** :\n\n${eduText}\n\n👉 [Voir le parcours complet](#education)`;
+      }
+
+      // Experience
+      if (/expérience|experience|stage|emploi|travail|job|intern|work/.test(q)) {
+        if (kb.experience.length === 0) {
+          return `**${p.firstName}** est actuellement étudiant et cherche activement un stage. Il n'a pas encore d'expérience professionnelle formelle, mais ses nombreux projets démontrent ses compétences pratiques.\n\n👉 [Voir ses projets](#projects)`;
+        }
+        const expText = kb.experience.map(e => `• **${e.role}** chez *${e.company}* (${e.period})`).join('\n');
+        return `Expériences de **${p.firstName}** :\n\n${expText}\n\n👉 [En savoir plus](#experience)`;
+      }
+
+      // Publications
+      if (/publication|article|paper|recherche|research/.test(q)) {
+        if (kb.publications.length === 0) {
+          return `**${p.firstName}** n'a pas encore de publications académiques. Son parcours est axé sur l'ingénierie logicielle et le développement de projets concrets.\n\n👉 [Découvrir ses projets](#projects)`;
+        }
+        return `**${p.firstName}** a ${kb.publications.length} publication(s). Consultez la section dédiée !\n\n👉 [Voir les publications](#publications)`;
+      }
+
+      // Projects
+      if (/projet|project|réalisation|portfolio|application|app/.test(q)) {
+        const projText = kb.projects.slice(0, 5).map(pr => `• **${pr.title}** — ${pr.tags.slice(0, 3).join(', ')}`).join('\n');
+        return `Voici quelques projets de **${p.firstName}** :\n\n${projText}\n\n👉 [Voir tous les projets](#projects)`;
+      }
+
+      // Certifications
+      if (/certification|certificat|formation en ligne|cours|course|udemy|coursera|freecodecamp/.test(q)) {
+        if (kb.certifications.length === 0) {
+          return `Pas de certifications enregistrées pour le moment.`;
+        }
+        const certText = kb.certifications.map(c => `• **${c.name}** — *${c.issuer}* (${c.date})`).join('\n');
+        return `Certifications de **${p.firstName}** :\n\n${certText}\n\n👉 [Voir les certifications](#certifications)`;
+      }
+
+      // Contact
+      if (/contact|email|mail|téléphone|phone|joindre|reach|message/.test(q)) {
+        return `Vous pouvez contacter **${p.firstName}** par email : **${p.emails[0]}**\n📍 Basé à ${p.location}\n\n👉 [Aller au formulaire de contact](#contact)`;
+      }
+
+      // Social / profiles
+      if (/social|github|linkedin|profil|réseau|lien|link|portfolio/.test(q)) {
+        const links = kb.socialLinks.map(l => `• [${l.name}](${l.url})`).join('\n');
+        return `Profils en ligne de **${p.firstName}** :\n\n${links}`;
+      }
+
+      // Stats
+      if (/stat|chiffre|nombre|number|résumé|summary/.test(q)) {
+        const statsText = kb.stats.map(s => `• **${s.value}** ${s.label}`).join('\n');
+        return `Chiffres clés :\n\n${statsText}`;
+      }
+
+      // Navigation
+      if (/section|navigation|menu|aller|go to|navigate/.test(q)) {
+        const navText = kb.navItems.map(n => `• [${n.label}](${n.href})`).join('\n');
+        return `Sections disponibles :\n\n${navText}`;
+      }
+
+      // Help
+      if (/aide|help|quoi|what can|tu (fais|peux)|comment/.test(q)) {
+        return `Je peux vous renseigner sur :\n\n• **Parcours** de ${p.firstName}\n• **Compétences** techniques et soft skills\n• **Éducation** et formation\n• **Projets** réalisés\n• **Certifications** obtenues\n• **Contact** et profils sociaux\n\nEssayez de me poser une question ! 😊`;
+      }
+
+      // Fallback
+      return `Je ne suis pas sûr de comprendre votre question. 🤔 Voici ce que je peux vous dire :\n\n• Qui est ${p.firstName}\n• Ses compétences\n• Son parcours académique\n• Ses projets\n• Comment le contacter\n\nEssayez l'un de ces sujets !`;
+    }
+
+    /* -- Handle user input -- */
+    function handleQuery(query) {
+      if (!query.trim()) return;
+
+      // Hide chips after first interaction
+      if (chipsVisible) {
+        chipsEl.style.display = 'none';
+        chipsVisible = false;
+      }
+
+      addMessage(query, false);
+
+      // Show typing then respond
+      const typingEl = showTyping();
+      setTimeout(() => {
+        typingEl.remove();
+        const response = getResponse(query);
+        addMessage(response, true);
+      }, 600 + Math.random() * 400);
+    }
+
+    // Form submit
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = input.value;
+      input.value = '';
+      handleQuery(val);
+    });
+
+    // Quick action chips
+    chipsEl.querySelectorAll('.ai-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        handleQuery(chip.textContent);
+      });
+    });
+  });
+</script>
+
+<style>
+  /* ============================================================ */
+  /*  Toggle Button                                                 */
+  /* ============================================================ */
+  .ai-toggle {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 950;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(17, 24, 39, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 16px;
+    color: var(--color-primary-light);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .ai-toggle:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+    border-color: var(--color-primary);
+  }
+
+  .ai-toggle.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.8);
+  }
+
+  .ai-toggle__ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 20px;
+    border: 2px solid var(--color-primary);
+    opacity: 0;
+    animation: ringPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes ringPulse {
+    0%, 100% { opacity: 0; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.05); }
+  }
+
+  /* ============================================================ */
+  /*  Chat Panel                                                    */
+  /* ============================================================ */
+  .ai-panel {
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 960;
+    width: 380px;
+    max-height: 520px;
+    display: flex;
+    flex-direction: column;
+    background: rgba(10, 15, 30, 0.98);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .ai-panel[aria-hidden='false'] {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* Header */
+  .ai-panel__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .ai-panel__avatar {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(99, 102, 241, 0.12);
+    border-radius: 10px;
+    color: var(--color-primary-light);
+  }
+
+  .ai-panel__name {
+    display: block;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--color-text-heading);
+  }
+
+  .ai-panel__status {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    color: var(--color-success);
+  }
+
+  .ai-panel__status-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--color-success);
+    border-radius: 50%;
+  }
+
+  .ai-panel__close {
+    margin-left: auto;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+
+  .ai-panel__close:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--color-text);
+  }
+
+  /* Messages */
+  .ai-panel__messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 200px;
+    max-height: 300px;
+  }
+
+  .ai-msg {
+    display: flex;
+    gap: 8px;
+    max-width: 90%;
+  }
+
+  .ai-msg--bot {
+    align-self: flex-start;
+  }
+
+  .ai-msg--user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+  }
+
+  .ai-msg__avatar {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(99, 102, 241, 0.12);
+    border-radius: 8px;
+    color: var(--color-primary-light);
+  }
+
+  .ai-msg__bubble {
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    border-radius: 12px;
+  }
+
+  .ai-msg--bot .ai-msg__bubble {
+    background: rgba(17, 24, 39, 0.9);
+    border: 1px solid var(--glass-border);
+    border-top-left-radius: 4px;
+    color: var(--color-text);
+  }
+
+  .ai-msg--user .ai-msg__bubble {
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    border-top-right-radius: 4px;
+    color: #fff;
+  }
+
+  .ai-msg__bubble a {
+    color: var(--color-primary-light);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+
+  .ai-msg--user .ai-msg__bubble a {
+    color: #e0e7ff;
+  }
+
+  .ai-msg__bubble strong {
+    font-weight: 600;
+  }
+
+  /* Typing indicator */
+  .typing-dots {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    height: 18px;
+  }
+
+  .typing-dots span {
+    width: 6px;
+    height: 6px;
+    background: var(--color-text-muted);
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+  }
+
+  .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+  .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Quick action chips */
+  .ai-panel__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 16px 12px;
+  }
+
+  .ai-chip {
+    padding: 5px 12px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--color-primary-light);
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-sans);
+  }
+
+  .ai-chip:hover {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: var(--color-primary);
+  }
+
+  /* Input */
+  .ai-panel__input {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .ai-panel__input input {
+    flex: 1;
+    padding: 8px 12px;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--color-text);
+    background: rgba(10, 15, 30, 0.6);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .ai-panel__input input::placeholder {
+    color: var(--color-text-muted);
+    opacity: 0.5;
+  }
+
+  .ai-panel__input input:focus {
+    border-color: var(--color-primary);
+  }
+
+  .ai-panel__input button {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gradient-primary);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .ai-panel__input button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.3);
+  }
+
+  /* ============================================================ */
+  /*  Responsive                                                    */
+  /* ============================================================ */
+  @media (max-width: 768px) {
+    .ai-toggle {
+      width: 46px;
+      height: 46px;
+      bottom: 16px;
+      left: 16px;
+      border-radius: 14px;
+    }
+
+    .ai-panel {
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      width: auto;
+      max-height: 480px;
+    }
+  }
+</style>

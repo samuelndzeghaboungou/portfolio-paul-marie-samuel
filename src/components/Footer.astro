@@ -1,0 +1,190 @@
+---
+/**
+ * @component Footer
+ * Three-column footer with brand, quick nav, and social links.
+ */
+import { personalInfo, navItems, socialLinks } from '../data/portfolio';
+
+const icons: Record<string, string> = {
+  github: '<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>',
+  linkedin: '<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/>',
+  mail: '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  terminal: '<polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/>',
+};
+
+function renderIcon(name: string, size = 18): string {
+  const path = icons[name] || '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+}
+
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="footer__inner">
+    <div class="footer__grid">
+      <!-- Brand -->
+      <div class="footer__brand">
+        <div class="footer__logo">
+          <span set:html={renderIcon('terminal', 20)} />
+          <span>{personalInfo.firstName} {personalInfo.lastName}</span>
+        </div>
+        <p class="footer__desc">{personalInfo.title} — {personalInfo.location}</p>
+      </div>
+
+      <!-- Quick nav -->
+      <div class="footer__nav-col">
+        <h4 class="footer__col-title">Navigation</h4>
+        <nav class="footer__nav" aria-label="Navigation rapide">
+          {navItems.map((item) => (
+            <a href={item.href} class="footer__nav-link">{item.label}</a>
+          ))}
+        </nav>
+      </div>
+
+      <!-- Social links -->
+      <div class="footer__connect-col">
+        <h4 class="footer__col-title">Connexion</h4>
+        <div class="footer__connect">
+          {socialLinks.map((link) => (
+            <a href={link.url} class="footer__social-link" target="_blank" rel="noopener noreferrer">
+              <span set:html={renderIcon(link.icon, 16)} />
+              {link.name}
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="footer__bottom">
+      <span>&copy; {currentYear} {personalInfo.firstName} {personalInfo.lastName}. Tous droits réservés.</span>
+      <span class="footer__credits">Built with <strong>Astro</strong>, deployed on <strong>Vercel</strong></span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background: rgba(10, 15, 30, 0.95);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid var(--glass-border);
+    padding: 60px 24px 0;
+  }
+
+  .footer__inner {
+    max-width: var(--max-width);
+    margin: 0 auto;
+  }
+
+  .footer__grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+
+  /* Brand */
+  .footer__logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--color-text-heading);
+    margin-bottom: 8px;
+  }
+
+  .footer__logo span:first-child {
+    color: var(--color-primary-light);
+  }
+
+  .footer__desc {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+  }
+
+  /* Column title */
+  .footer__col-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-text-heading);
+    margin-bottom: 16px;
+  }
+
+  /* Nav links */
+  .footer__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .footer__nav-link {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    transition: color 0.2s, transform 0.2s;
+    display: inline-block;
+  }
+
+  .footer__nav-link:hover {
+    color: var(--color-primary-light);
+    transform: translateX(4px);
+  }
+
+  /* Social links */
+  .footer__connect {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .footer__social-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    transition: color 0.2s, transform 0.2s;
+  }
+
+  .footer__social-link:hover {
+    color: var(--color-primary-light);
+    transform: translateX(4px);
+  }
+
+  /* Bottom bar */
+  .footer__bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+  }
+
+  .footer__credits strong {
+    color: var(--color-primary-light);
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    .footer {
+      padding: 40px 16px 0;
+    }
+
+    .footer__grid {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    .footer__bottom {
+      flex-direction: column;
+      gap: 8px;
+      text-align: center;
+    }
+  }
+</style>

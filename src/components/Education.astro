@@ -1,0 +1,219 @@
+---
+/**
+ * @component Education
+ * Vertical timeline with gradient dots, pulsing glow, and "Latest" badge.
+ */
+import { education } from '../data/portfolio';
+
+const externalLinkIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>';
+---
+
+{education.length > 0 && (
+  <section id="education" class="section">
+    <div class="edu__header reveal">
+      <span class="section__label">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 6 3 6 3s6-1 6-3v-5"/></svg>
+        Éducation
+      </span>
+      <h2 class="section__title">Mon Parcours Académique</h2>
+      <p class="section__subtitle">Les étapes clés de ma formation.</p>
+    </div>
+
+    <div class="edu__timeline stagger-children">
+      {education.map((item) => (
+        <div class="edu__entry reveal">
+          <div class="edu__dot-wrapper">
+            <div class="edu__dot"></div>
+          </div>
+          <div class="edu__card">
+            {item.isLatest && <span class="edu__badge-latest">Latest</span>}
+            <span class="edu__period">{item.period}</span>
+            <h3 class="edu__degree">{item.degree}</h3>
+            <span class="edu__field">{item.field}</span>
+            {item.institutionUrl ? (
+              <a href={item.institutionUrl} class="edu__institution" target="_blank" rel="noopener noreferrer">
+                {item.institution}
+                <span set:html={externalLinkIcon} />
+              </a>
+            ) : (
+              <span class="edu__institution edu__institution--text">{item.institution}</span>
+            )}
+            <p class="edu__desc">{item.description}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+)}
+
+<style>
+  .edu__timeline {
+    position: relative;
+    padding-left: 40px;
+  }
+
+  /* Vertical line */
+  .edu__timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--color-primary), var(--color-accent), transparent);
+    border-radius: 2px;
+  }
+
+  .edu__entry {
+    position: relative;
+    margin-bottom: 32px;
+  }
+
+  .edu__entry:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Dot */
+  .edu__dot-wrapper {
+    position: absolute;
+    left: -40px;
+    top: 24px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .edu__dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    border: 3px solid var(--color-bg);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 0 15px rgba(99, 102, 241, 0.3);
+    animation: dotPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes dotPulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), 0 0 15px rgba(99, 102, 241, 0.3); }
+    50% { box-shadow: 0 0 0 5px rgba(99, 102, 241, 0.1), 0 0 25px rgba(99, 102, 241, 0.2); }
+  }
+
+  /* Card */
+  .edu__card {
+    padding: 28px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .edu__card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-card-top);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .edu__card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--color-border-hover);
+  }
+
+  .edu__card:hover::before {
+    opacity: 1;
+  }
+
+  .edu__badge-latest {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-success);
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+
+  .edu__period {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    background: rgba(99, 102, 241, 0.08);
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 12px;
+  }
+
+  .edu__degree {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--color-text-heading);
+    margin-bottom: 4px;
+  }
+
+  .edu__field {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-primary-light);
+    margin-bottom: 8px;
+  }
+
+  .edu__institution {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin-bottom: 12px;
+    transition: color 0.2s;
+  }
+
+  a.edu__institution:hover {
+    color: var(--color-primary-light);
+  }
+
+  .edu__institution--text {
+    cursor: default;
+  }
+
+  .edu__desc {
+    font-size: 0.88rem;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    .edu__timeline::before {
+      display: none;
+    }
+
+    .edu__timeline {
+      padding-left: 0;
+    }
+
+    .edu__dot-wrapper {
+      display: none;
+    }
+
+    .edu__card {
+      padding: 20px;
+    }
+  }
+</style>

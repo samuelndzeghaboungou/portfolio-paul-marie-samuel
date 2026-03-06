@@ -1,0 +1,105 @@
+---
+/**
+ * @component About
+ * Two-column grid of numbered cards with accent bars and hover effects.
+ */
+import { personalInfo } from '../data/portfolio';
+---
+
+<section id="about" class="section">
+  <div class="about__header reveal">
+    <span class="section__label">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      À Propos
+    </span>
+    <h2 class="section__title">Me Connaître</h2>
+    <p class="section__subtitle">Un aperçu de mon parcours, mes motivations et ma vision.</p>
+  </div>
+
+  <div class="about__grid stagger-children">
+    {personalInfo.bio.map((paragraph, i) => (
+      <div class="about__card reveal">
+        <div class="about__accent"></div>
+        <span class="about__number">{String(i + 1).padStart(2, '0')}</span>
+        <p class="about__text">{paragraph}</p>
+      </div>
+    ))}
+  </div>
+</section>
+
+<style>
+  .about__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .about__card {
+    position: relative;
+    padding: 28px 28px 28px 40px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .about__card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-card-top);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .about__card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--color-border-hover);
+  }
+
+  .about__card:hover::before {
+    opacity: 1;
+  }
+
+  .about__accent {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--gradient-primary);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .about__number {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-primary-light);
+    margin-bottom: 12px;
+    opacity: 0.6;
+  }
+
+  .about__text {
+    font-size: 0.95rem;
+    color: var(--color-text);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 768px) {
+    .about__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .about__card {
+      padding: 24px 24px 24px 32px;
+    }
+  }
+</style>

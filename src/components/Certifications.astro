@@ -1,0 +1,174 @@
+---
+/**
+ * @component Certifications
+ * Grid of certification cards with issuer icons and skill tags.
+ * Only rendered when certifications data exists.
+ */
+import { certifications } from '../data/portfolio';
+
+const icons: Record<string, string> = {
+  award: '<circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>',
+};
+
+function renderIcon(name: string, size = 24): string {
+  const path = icons[name] || icons.award;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+}
+
+const externalLinkIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>';
+---
+
+{certifications.length > 0 && (
+  <section id="certifications" class="section">
+    <div class="cert__header reveal">
+      <span class="section__label">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+        Certifications
+      </span>
+      <h2 class="section__title">Certifications & Formations</h2>
+      <p class="section__subtitle">Formations en ligne et certifications obtenues pour compléter mon parcours.</p>
+    </div>
+
+    <div class="cert__grid stagger-children">
+      {certifications.map((cert) => (
+        <div class="cert__card reveal">
+          <div class="cert__card-top"></div>
+          <div class="cert__icon-wrap">
+            <span set:html={renderIcon(cert.icon, 24)} />
+          </div>
+          <h3 class="cert__name">{cert.name}</h3>
+          {cert.issuerUrl ? (
+            <a href={cert.issuerUrl} class="cert__issuer" target="_blank" rel="noopener noreferrer">
+              {cert.issuer}
+              <span set:html={externalLinkIcon} />
+            </a>
+          ) : (
+            <span class="cert__issuer cert__issuer--text">{cert.issuer}</span>
+          )}
+          <span class="cert__date">{cert.date}</span>
+          <div class="cert__skills">
+            {cert.skills.map((skill) => (
+              <span class="cert__skill">{skill}</span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+)}
+
+<style>
+  .cert__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  .cert__card {
+    position: relative;
+    padding: 28px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .cert__card-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gradient-card-top);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .cert__card:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-border-hover);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .cert__card:hover .cert__card-top {
+    opacity: 1;
+  }
+
+  .cert__icon-wrap {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.15);
+    border-radius: var(--radius-sm);
+    color: var(--color-warning);
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+  }
+
+  .cert__card:hover .cert__icon-wrap {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+  }
+
+  .cert__name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-heading);
+    margin-bottom: 8px;
+  }
+
+  .cert__issuer {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin-bottom: 6px;
+    transition: color 0.2s;
+  }
+
+  a.cert__issuer:hover {
+    color: var(--color-primary-light);
+  }
+
+  .cert__issuer--text {
+    cursor: default;
+  }
+
+  .cert__date {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    opacity: 0.7;
+    margin-bottom: 14px;
+  }
+
+  .cert__skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .cert__skill {
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--color-warning);
+    background: rgba(245, 158, 11, 0.06);
+    border: 1px solid rgba(245, 158, 11, 0.12);
+    border-radius: 999px;
+  }
+
+  @media (max-width: 768px) {
+    .cert__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

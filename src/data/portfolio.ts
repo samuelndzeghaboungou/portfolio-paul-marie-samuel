@@ -104,7 +104,7 @@ export const personalInfo: PersonalInfo = {
   ],
   emails: ['s.ndzeghaboungou@esisa.ac.ma'],
   location: 'Fès, Maroc',
-  avatar: '/avatar.webp',
+  avatar: '/avatar.jpg',
   availabilityBadge: 'Disponible pour un stage',
   cvUrl: '/cv-paul-marie-samuel.pdf',
 };

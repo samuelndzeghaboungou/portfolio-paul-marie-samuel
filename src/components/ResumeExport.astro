@@ -1,0 +1,181 @@
+---
+/**
+ * @component ResumeExport
+ * Modal dialog for exporting the portfolio as a professional ATS-compatible
+ * resume in PDF or DOCX format. Triggered by a custom event from Hero.
+ * Libraries (jsPDF, docx) are dynamically imported for code-splitting.
+ */
+import {
+  personalInfo, technicalSkills, softSkills, education,
+  experience, publications, projects, certifications, socialLinks,
+} from '../data/portfolio';
+
+const resumeData = JSON.stringify({
+  personalInfo: {
+    ...personalInfo,
+    bio: personalInfo.bio.map(p => p.replace(/<[^>]*>/g, '')),
+  },
+  technicalSkills, softSkills, education, experience, publications,
+  projects, certifications, socialLinks,
+});
+---
+
+<div class="resume-modal" id="resume-modal" aria-hidden="true" data-resume={resumeData}>
+  <div class="resume-modal__backdrop"></div>
+  <div class="resume-modal__dialog">
+    <div class="resume-modal__header">
+      <h2 class="resume-modal__title">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+        Exporter mon CV
+      </h2>
+      <button class="resume-modal__close" aria-label="Fermer">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="resume-modal__cards">
+      <button class="resume-modal__card" id="export-pdf">
+        <div class="resume-modal__card-icon resume-modal__card-icon--pdf">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <span class="resume-modal__card-badge resume-modal__card-badge--pdf">PDF</span>
+        <span class="resume-modal__card-title">Document PDF</span>
+        <span class="resume-modal__card-desc">Idéal pour candidatures en ligne &amp; email</span>
+      </button>
+      <button class="resume-modal__card" id="export-docx">
+        <div class="resume-modal__card-icon resume-modal__card-icon--docx">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
+        </div>
+        <span class="resume-modal__card-badge resume-modal__card-badge--docx">DOCX</span>
+        <span class="resume-modal__card-title">Document Word</span>
+        <span class="resume-modal__card-desc">Idéal pour édition &amp; systèmes ATS</span>
+      </button>
+    </div>
+    <div class="resume-modal__status" id="resume-status"></div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const modal = document.getElementById('resume-modal') as HTMLElement;
+  const backdrop = modal.querySelector('.resume-modal__backdrop') as HTMLElement;
+  const closeBtn = modal.querySelector('.resume-modal__close') as HTMLElement;
+  const statusEl = document.getElementById('resume-status') as HTMLElement;
+  const pdfBtn = document.getElementById('export-pdf') as HTMLElement;
+  const docxBtn = document.getElementById('export-docx') as HTMLElement;
+  const data = JSON.parse(modal.dataset.resume || '{}');
+  const pi = data.personalInfo;
+  const fullName = `${pi.firstName} ${pi.lastName}`;
+  const fileName = `${pi.firstName.replace(/\s+/g,'_')}_${pi.lastName.replace(/\s+/g,'_')}_Resume`;
+
+  function openModal() { modal.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+  function closeModal() { modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; statusEl.className='resume-modal__status'; statusEl.textContent=''; }
+
+  window.addEventListener('open-resume-modal', openModal);
+  backdrop.addEventListener('click', closeModal);
+  closeBtn.addEventListener('click', closeModal);
+  document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+  function showStatus(msg: string, type: 'loading'|'success'|'error') {
+    statusEl.className = `resume-modal__status resume-modal__status--${type}`;
+    statusEl.innerHTML = type==='loading' ? `<span class="resume-modal__spinner"></span> ${msg}` : msg;
+  }
+
+  /* PDF */
+  pdfBtn.addEventListener('click', async () => {
+    showStatus('Génération du PDF…','loading');
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF({unit:'mm',format:'a4'});
+      const W=210, M=15, CW=W-2*M; let y=M;
+      function checkPage(n: number){if(y+n>282){doc.addPage();y=M;}}
+
+      doc.setFont('helvetica','bold'); doc.setFontSize(22);
+      doc.text(fullName,W/2,y,{align:'center'}); y+=8;
+      doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(80,80,80);
+      doc.text(pi.title,W/2,y,{align:'center'}); y+=7;
+      doc.setFontSize(9); doc.setTextColor(100,100,100);
+      doc.text([...(pi.emails||[]),...(pi.phone?[pi.phone]:[]),pi.location].join('  |  '),W/2,y,{align:'center'}); y+=5;
+      const lnks=data.socialLinks.filter((s:any)=>s.name!=='Email').map((s:any)=>`${s.name}: ${s.url}`);
+      if(lnks.length){doc.setFontSize(8);doc.text(lnks.join('  |  '),W/2,y,{align:'center'});y+=6;}
+      doc.setDrawColor(50,100,200);doc.setLineWidth(0.5);doc.line(M,y,W-M,y);y+=8;
+
+      function sectTitle(t:string){checkPage(14);doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30,60,150);doc.text(t.toUpperCase(),M,y);y+=1;doc.setDrawColor(50,100,200);doc.setLineWidth(0.3);doc.line(M,y,W-M,y);y+=6;doc.setTextColor(40,40,40);}
+      function bullet(t:string,ind=5){doc.setFont('helvetica','normal');doc.setFontSize(9.5);const l=doc.splitTextToSize(t,CW-ind);checkPage(l.length*4.5);doc.text('•',M+1,y);doc.text(l,M+ind,y);y+=l.length*4.5;}
+
+      if(pi.bio?.length){sectTitle('Résumé Professionnel');doc.setFont('helvetica','normal');doc.setFontSize(9.5);const sl=doc.splitTextToSize(pi.bio[0],CW);checkPage(sl.length*4.5);doc.text(sl,M,y);y+=sl.length*4.5+4;}
+      if(data.experience?.length){sectTitle('Expérience');data.experience.forEach((e:any)=>{checkPage(16);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text(e.role,M,y);doc.setFont('helvetica','italic');doc.setFontSize(9);doc.text(`${e.company}  |  ${e.period}`,M,y+4.5);y+=10;if(e.description)bullet(e.description);y+=2;});}
+      if(data.education?.length){sectTitle('Éducation');data.education.forEach((e:any)=>{checkPage(14);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text(`${e.degree} — ${e.field}`,M,y);doc.setFont('helvetica','italic');doc.setFontSize(9);doc.text(`${e.institution}  |  ${e.period}`,M,y+4.5);y+=10;if(e.description)bullet(e.description);y+=2;});}
+      if(data.technicalSkills?.length){sectTitle('Compétences Techniques');data.technicalSkills.forEach((c:any)=>{checkPage(8);doc.setFont('helvetica','bold');doc.setFontSize(9.5);const lbl=`${c.title}: `;doc.text(lbl,M,y);const lw=doc.getTextWidth(lbl);doc.setFont('helvetica','normal');const sl2=doc.splitTextToSize(c.skills.join(', '),CW-lw);doc.text(sl2[0],M+lw,y);for(let i=1;i<sl2.length;i++){y+=4.5;checkPage(5);doc.text(sl2[i],M,y);}y+=5.5;});y+=2;}
+      if(data.softSkills?.length){sectTitle('Compétences Transversales');doc.setFont('helvetica','normal');doc.setFontSize(9.5);const st=doc.splitTextToSize(data.softSkills.map((s:any)=>s.name).join(', '),CW);checkPage(st.length*4.5);doc.text(st,M,y);y+=st.length*4.5+4;}
+      if(data.projects?.length){sectTitle('Projets');data.projects.forEach((p:any)=>{checkPage(14);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text(p.title,M,y);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(100,100,100);doc.text(p.tags.join(' • '),M,y+4);doc.setTextColor(40,40,40);y+=9;if(p.description)bullet(p.description);y+=2;});}
+      if(data.certifications?.length){sectTitle('Certifications');data.certifications.forEach((c:any)=>{checkPage(8);doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.text(c.name,M,y);doc.setFont('helvetica','italic');doc.setFontSize(8.5);doc.text(`${c.issuer} — ${c.date}`,M,y+4);y+=10;});}
+
+      doc.save(`${fileName}.pdf`);
+      showStatus('PDF généré avec succès !','success');
+    } catch(err:any){showStatus(`Erreur : ${err.message}`,'error');}
+  });
+
+  /* DOCX */
+  docxBtn.addEventListener('click', async () => {
+    showStatus('Génération du DOCX…','loading');
+    try {
+      const docxLib = await import('docx');
+      const { saveAs } = await import('file-saver');
+      const { Document, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, Packer } = docxLib;
+      const BLUE='1E3C96';
+      function sectHead(t:string){return new Paragraph({heading:HeadingLevel.HEADING_2,spacing:{before:300,after:100},border:{bottom:{style:BorderStyle.SINGLE,size:1,color:BLUE}},children:[new TextRun({text:t.toUpperCase(),bold:true,size:24,color:BLUE,font:'Calibri'})]});}
+      const ch:any[]=[];
+      ch.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:60},children:[new TextRun({text:fullName,bold:true,size:40,font:'Calibri'})]}));
+      ch.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:60},children:[new TextRun({text:pi.title,size:22,color:'555555',font:'Calibri'})]}));
+      ch.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:40},children:[new TextRun({text:[...(pi.emails||[]),...(pi.phone?[pi.phone]:[]),pi.location].join('  |  '),size:18,color:'666666',font:'Calibri'})]}));
+      const lnk2=data.socialLinks.filter((s:any)=>s.name!=='Email').map((s:any)=>`${s.name}: ${s.url}`).join('  |  ');
+      if(lnk2)ch.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:200},children:[new TextRun({text:lnk2,size:16,color:'888888',font:'Calibri'})]}));
+      if(pi.bio?.length){ch.push(sectHead('Résumé Professionnel'));ch.push(new Paragraph({spacing:{after:120},children:[new TextRun({text:pi.bio[0],size:20,font:'Calibri'})]}));}
+      if(data.experience?.length){ch.push(sectHead('Expérience'));data.experience.forEach((e:any)=>{ch.push(new Paragraph({spacing:{before:100},children:[new TextRun({text:e.role,bold:true,size:21,font:'Calibri'}),new TextRun({text:'  —  ',size:20,font:'Calibri'}),new TextRun({text:e.company,italics:true,size:20,font:'Calibri'})]}));ch.push(new Paragraph({children:[new TextRun({text:e.period,size:18,color:'888888',font:'Calibri'})]}));if(e.description)ch.push(new Paragraph({bullet:{level:0},spacing:{after:60},children:[new TextRun({text:e.description,size:20,font:'Calibri'})]}));});}
+      if(data.education?.length){ch.push(sectHead('Éducation'));data.education.forEach((e:any)=>{ch.push(new Paragraph({spacing:{before:100},children:[new TextRun({text:`${e.degree} — ${e.field}`,bold:true,size:21,font:'Calibri'})]}));ch.push(new Paragraph({children:[new TextRun({text:e.institution,italics:true,size:20,font:'Calibri'}),new TextRun({text:`  |  ${e.period}`,size:18,color:'888888',font:'Calibri'})]}));if(e.description)ch.push(new Paragraph({bullet:{level:0},spacing:{after:60},children:[new TextRun({text:e.description,size:20,font:'Calibri'})]}));});}
+      if(data.technicalSkills?.length){ch.push(sectHead('Compétences Techniques'));data.technicalSkills.forEach((c:any)=>{ch.push(new Paragraph({spacing:{after:40},children:[new TextRun({text:`${c.title}: `,bold:true,size:20,color:BLUE,font:'Calibri'}),new TextRun({text:c.skills.join(', '),size:20,font:'Calibri'})]}));});}
+      if(data.softSkills?.length){ch.push(sectHead('Compétences Transversales'));ch.push(new Paragraph({spacing:{after:80},children:[new TextRun({text:data.softSkills.map((s:any)=>s.name).join(', '),size:20,font:'Calibri'})]}));}
+      if(data.projects?.length){ch.push(sectHead('Projets'));data.projects.forEach((p:any)=>{ch.push(new Paragraph({spacing:{before:80},children:[new TextRun({text:p.title,bold:true,size:21,font:'Calibri'}),new TextRun({text:`  (${p.tags.join(', ')})`,size:18,color:'888888',font:'Calibri'})]}));if(p.description)ch.push(new Paragraph({bullet:{level:0},spacing:{after:60},children:[new TextRun({text:p.description,size:20,font:'Calibri'})]}));});}
+      if(data.certifications?.length){ch.push(sectHead('Certifications'));data.certifications.forEach((c:any)=>{ch.push(new Paragraph({spacing:{after:40},children:[new TextRun({text:c.name,bold:true,size:20,font:'Calibri'}),new TextRun({text:` — ${c.issuer} (${c.date})`,italics:true,size:18,color:'666666',font:'Calibri'})]}));});}
+      const docFile=new Document({sections:[{properties:{page:{margin:{top:720,bottom:720,left:720,right:720}}},children:ch}]});
+      const blob=await Packer.toBlob(docFile);
+      saveAs(blob,`${fileName}.docx`);
+      showStatus('Document Word généré avec succès !','success');
+    } catch(err:any){showStatus(`Erreur : ${err.message}`,'error');}
+  });
+});
+</script>
+
+<style>
+  .resume-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .3s ease;}
+  .resume-modal[aria-hidden='false']{pointer-events:all;opacity:1;}
+  .resume-modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);}
+  .resume-modal__dialog{position:relative;width:90%;max-width:560px;background:var(--glass-bg,rgba(17,24,39,.95));backdrop-filter:blur(20px);border:1px solid var(--glass-border,rgba(255,255,255,.08));border-radius:var(--radius,12px);padding:32px;transform:scale(.9) translateY(20px);transition:transform .35s cubic-bezier(.34,1.56,.64,1);box-shadow:0 25px 60px rgba(0,0,0,.5);}
+  .resume-modal[aria-hidden='false'] .resume-modal__dialog{transform:scale(1) translateY(0);}
+  .resume-modal__header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
+  .resume-modal__title{display:flex;align-items:center;gap:10px;font-size:1.2rem;font-weight:700;color:var(--color-text-heading,#f1f5f9);}
+  .resume-modal__title svg{color:var(--color-primary-light,#818cf8);}
+  .resume-modal__close{display:flex;align-items:center;justify-content:center;width:36px;height:36px;background:rgba(99,102,241,.08);border:1px solid var(--glass-border,rgba(255,255,255,.05));border-radius:8px;color:var(--color-text-muted,#94a3b8);cursor:pointer;transition:all .2s;}
+  .resume-modal__close:hover{color:var(--color-text-heading,#f1f5f9);background:rgba(99,102,241,.15);}
+  .resume-modal__cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .resume-modal__card{display:flex;flex-direction:column;align-items:center;gap:10px;padding:28px 16px;background:rgba(99,102,241,.04);border:1px solid var(--color-border,#1e293b);border-radius:var(--radius-sm,8px);cursor:pointer;transition:all .3s ease;text-align:center;font-family:inherit;}
+  .resume-modal__card:hover{background:rgba(99,102,241,.1);border-color:var(--color-primary,#6366f1);transform:translateY(-3px);box-shadow:0 8px 25px rgba(99,102,241,.15);}
+  .resume-modal__card-icon{width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:12px;}
+  .resume-modal__card-icon--pdf{background:rgba(239,68,68,.12);color:#ef4444;}
+  .resume-modal__card-icon--docx{background:rgba(59,130,246,.12);color:#3b82f6;}
+  .resume-modal__card-badge{font-family:var(--font-mono,monospace);font-size:.7rem;font-weight:700;letter-spacing:.1em;padding:2px 10px;border-radius:4px;}
+  .resume-modal__card-badge--pdf{background:rgba(239,68,68,.15);color:#ef4444;}
+  .resume-modal__card-badge--docx{background:rgba(59,130,246,.15);color:#3b82f6;}
+  .resume-modal__card-title{font-size:.95rem;font-weight:600;color:var(--color-text-heading,#f1f5f9);}
+  .resume-modal__card-desc{font-size:.78rem;color:var(--color-text-muted,#94a3b8);line-height:1.4;}
+  .resume-modal__status{margin-top:20px;padding:0;font-size:.82rem;text-align:center;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:8px;min-height:0;transition:all .3s ease;}
+  .resume-modal__status--loading,.resume-modal__status--success,.resume-modal__status--error{padding:10px 16px;min-height:40px;}
+  .resume-modal__status--loading{background:rgba(99,102,241,.1);color:var(--color-primary-light,#818cf8);}
+  .resume-modal__status--success{background:rgba(34,197,94,.1);color:#22c55e;}
+  .resume-modal__status--error{background:rgba(239,68,68,.1);color:#ef4444;}
+  .resume-modal__spinner{width:16px;height:16px;border:2px solid rgba(99,102,241,.3);border-top-color:var(--color-primary-light,#818cf8);border-radius:50%;animation:rspin .8s linear infinite;display:inline-block;}
+  @keyframes rspin{to{transform:rotate(360deg);}}
+  :global(html[data-theme='light']) .resume-modal__dialog{background:rgba(255,255,255,.95);border-color:rgba(0,0,0,.1);box-shadow:0 25px 60px rgba(0,0,0,.15);}
+  :global(html[data-theme='light']) .resume-modal__card{background:rgba(99,102,241,.03);border-color:#e2e8f0;}
+  @media(max-width:768px){.resume-modal__dialog{padding:24px 16px;}.resume-modal__cards{grid-template-columns:1fr;}}
+</style>

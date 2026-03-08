@@ -26,7 +26,7 @@ function renderIcon(name: string, size = 18): string {
 // Action buttons – adaptive
 const actionButtons = [
   ...(projects.length > 0 ? [{ label: 'Voir mes Projets', href: '#projects', icon: 'folder', variant: 'primary' }] : []),
-  ...(personalInfo.cvUrl ? [{ label: 'Télécharger mon CV', href: personalInfo.cvUrl, icon: 'download', variant: 'ghost' }] : []),
+  { label: 'Télécharger mon CV', href: '#resume-export', icon: 'download', variant: 'ghost', isResumeBtn: true },
   { label: 'Me Contacter', href: '#contact', icon: 'send', variant: 'ghost' },
 ];
 ---
@@ -53,16 +53,33 @@ const actionButtons = [
       <!-- Action buttons -->
       <div class="hero__actions reveal">
         {actionButtons.map((btn) => (
-          <a
-            href={btn.href}
-            class={`hero__btn hero__btn--${btn.variant}`}
-            {...(btn.href.startsWith('http') || btn.href.endsWith('.pdf') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-          >
-            <span set:html={renderIcon(btn.icon, 18)} />
-            {btn.label}
-          </a>
+          btn.isResumeBtn ? (
+            <button
+              class={`hero__btn hero__btn--${btn.variant}`}
+              id="open-resume-modal-btn"
+              type="button"
+            >
+              <span set:html={renderIcon(btn.icon, 18)} />
+              {btn.label}
+            </button>
+          ) : (
+            <a
+              href={btn.href}
+              class={`hero__btn hero__btn--${btn.variant}`}
+              {...(btn.href.startsWith('http') || btn.href.endsWith('.pdf') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            >
+              <span set:html={renderIcon(btn.icon, 18)} />
+              {btn.label}
+            </a>
+          )
         ))}
       </div>
+
+      <script>
+        document.getElementById('open-resume-modal-btn')?.addEventListener('click', () => {
+          window.dispatchEvent(new Event('open-resume-modal'));
+        });
+      </script>
 
       <!-- Social pills -->
       <div class="hero__socials reveal">

@@ -221,9 +221,9 @@ export const publications: any[] = [];
 export const projects: Project[] = [
   {
     title: 'Application de Gestion des Étudiants',
-    description: 'Application web full-stack de gestion des étudiants avec authentification sécurisée (NextAuth.js), opérations CRUD complètes, interface moderne et responsive. Système de login/register, dashboard interactif et API REST intégrée.',
-    tags: ['Next.js', 'React', 'TypeScript', 'NextAuth.js', 'Tailwind CSS', 'API REST'],
-    url: 'https://application-de-gestion-des-etudiant.vercel.app',
+    description: 'Application web de gestion des étudiants construite avec Astro et React. Authentification client-side, opérations CRUD complètes, dashboard interactif avec statistiques, recherche et filtres, interface moderne avec thème bleu-violet et design responsive.',
+    tags: ['Astro', 'React', 'TypeScript', 'Vercel', 'CSS3'],
+    url: 'https://app-gestion-des-etudiants.vercel.app',
     github: 'https://github.com/samuelndzeghaboungou/app-gestion-des-etudiants',
   },
   {

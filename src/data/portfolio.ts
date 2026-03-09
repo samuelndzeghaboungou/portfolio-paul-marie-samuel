@@ -114,9 +114,8 @@ export const personalInfo: PersonalInfo = {
 /* ------------------------------------------------------------------ */
 
 export const stats: Stat[] = [
-  { label: 'Projets Réalisés', value: '15+' },
-  { label: 'Technologies Maîtrisées', value: '25+' },
-  { label: 'Certifications', value: '5+' },
+  { label: 'Projets Réalisés', value: '2+' },
+  { label: 'Technologies Maîtrisées', value: '15+' },
   { label: "Années d'Études Sup.", value: '3+' },
 ];
 
@@ -221,53 +220,18 @@ export const publications: any[] = [];
 
 export const projects: Project[] = [
   {
+    title: 'Application de Gestion des Étudiants',
+    description: 'Application web full-stack de gestion des étudiants avec authentification sécurisée (NextAuth.js), opérations CRUD complètes, interface moderne et responsive. Système de login/register, dashboard interactif et API REST intégrée.',
+    tags: ['Next.js', 'React', 'TypeScript', 'NextAuth.js', 'Tailwind CSS', 'API REST'],
+    url: 'https://application-de-gestion-des-etudiant.vercel.app',
+    github: 'https://github.com/samuelndzeghaboungou/app-gestion-des-etudiants',
+  },
+  {
     title: 'Portfolio Personnel',
-    description: 'Site web portfolio moderne et responsive construit avec Astro et déployé sur Vercel. Design sombre professionnel avec animations fluides, chatbot IA intégré et performances optimisées.',
+    description: 'Site web portfolio moderne et responsive construit avec Astro et déployé sur Vercel. Design sombre professionnel avec animations fluides, chatbot IA intégré, export CV (PDF/DOCX) et performances optimisées.',
     tags: ['Astro', 'TypeScript', 'CSS3', 'Vercel'],
     url: 'https://portfolio-paul-marie-samuel.vercel.app',
     github: 'https://github.com/samuelndzeghaboungou/portfolio-paul-marie-samuel',
-  },
-  {
-    title: 'Application E-Commerce',
-    description: 'Plateforme e-commerce complète avec gestion de panier, paiement sécurisé, panel administrateur, et système de recommandations produits. Architecture microservices.',
-    tags: ['React', 'Node.js', 'MongoDB', 'Express', 'Redux', 'Stripe'],
-    github: 'https://github.com/samuelndzeghaboungou',
-  },
-  {
-    title: 'Application de Gestion de Tâches',
-    description: 'Application web collaborative de gestion de tâches avec boards Kanban, drag-and-drop, notifications en temps réel et authentification sécurisée.',
-    tags: ['Vue.js', 'NestJS', 'PostgreSQL', 'Socket.io', 'Docker'],
-    github: 'https://github.com/samuelndzeghaboungou',
-  },
-  {
-    title: 'Application Mobile Fitness',
-    description: 'Application mobile cross-platform pour le suivi d\'entraînements, la planification de séances, le tracking de progression avec graphiques dynamiques et notifications push.',
-    tags: ['Flutter', 'Dart', 'Firebase', 'REST API'],
-    github: 'https://github.com/samuelndzeghaboungou',
-  },
-  {
-    title: 'API REST Bancaire',
-    description: 'API RESTful sécurisée pour la gestion de comptes bancaires avec authentification JWT, transactions, historique et documentation Swagger complète.',
-    tags: ['Spring Boot', 'Java', 'PostgreSQL', 'JWT', 'Swagger'],
-    github: 'https://github.com/samuelndzeghaboungou',
-  },
-  {
-    title: 'Dashboard Analytics',
-    description: 'Tableau de bord interactif pour la visualisation de données en temps réel avec graphiques dynamiques, filtres avancés et export de rapports PDF.',
-    tags: ['Next.js', 'TypeScript', 'Chart.js', 'Tailwind CSS', 'Prisma'],
-    github: 'https://github.com/samuelndzeghaboungou',
-  },
-  {
-    title: 'Chat en Temps Réel',
-    description: 'Application de messagerie instantanée avec salons de discussion, messages privés, partage de fichiers, indicateur de frappe et statut en ligne.',
-    tags: ['React', 'Socket.io', 'Node.js', 'MongoDB', 'Redis'],
-    github: 'https://github.com/samuelndzeghaboungou',
-  },
-  {
-    title: 'Système de Réservation',
-    description: 'Plateforme web de réservation en ligne avec calendrier interactif, gestion des disponibilités, notifications automatiques et paiement intégré.',
-    tags: ['Angular', 'Django', 'Python', 'MySQL', 'Docker'],
-    github: 'https://github.com/samuelndzeghaboungou',
   },
 ];
 
@@ -275,48 +239,7 @@ export const projects: Project[] = [
 /*  Certifications (optional)                                          */
 /* ------------------------------------------------------------------ */
 
-export const certifications: Certification[] = [
-  {
-    name: 'JavaScript Algorithms and Data Structures',
-    issuer: 'freeCodeCamp',
-    issuerUrl: 'https://www.freecodecamp.org',
-    date: '2024',
-    skills: ['JavaScript', 'Algorithms', 'Data Structures'],
-    icon: 'award',
-  },
-  {
-    name: 'Responsive Web Design',
-    issuer: 'freeCodeCamp',
-    issuerUrl: 'https://www.freecodecamp.org',
-    date: '2024',
-    skills: ['HTML5', 'CSS3', 'Responsive Design'],
-    icon: 'award',
-  },
-  {
-    name: 'Python for Everybody',
-    issuer: 'Coursera – University of Michigan',
-    issuerUrl: 'https://www.coursera.org',
-    date: '2024',
-    skills: ['Python', 'Web Scraping', 'Databases'],
-    icon: 'award',
-  },
-  {
-    name: 'Git & GitHub Masterclass',
-    issuer: 'Udemy',
-    issuerUrl: 'https://www.udemy.com',
-    date: '2024',
-    skills: ['Git', 'GitHub', 'Version Control'],
-    icon: 'award',
-  },
-  {
-    name: 'Introduction to Cybersecurity',
-    issuer: 'Cisco Networking Academy',
-    issuerUrl: 'https://www.netacad.com',
-    date: '2025',
-    skills: ['Cybersecurity', 'Network Security', 'Ethical Hacking'],
-    icon: 'shield',
-  },
-];
+export const certifications: Certification[] = [];
 
 /* ------------------------------------------------------------------ */
 /*  Social Links                                                       */
